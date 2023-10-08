@@ -76,6 +76,11 @@ def get_prediction(body: ChurnData):
 
 
 @app.get("/api")
+def hello_server():
+    return jsonable_encoder({"msg":"Server is Running"})
+
+
+@app.get("/api/home")
 def read_root():
     df_train = pd.read_csv("dataset/pre_train.csv")
     df_train = preprocess(df_train)
