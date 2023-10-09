@@ -76,7 +76,7 @@ def get_prediction(body: ChurnData):
 
 
 
-@app.get("/api")
+@app.get("/api/test")
 def read_root():
     df_train = pd.read_csv("dataset/pre_train.csv")
     df_train = preprocess(df_train)
@@ -85,3 +85,7 @@ def read_root():
     res_r = res_rounded.astype(int).ravel()
     return jsonable_encoder({"Result-Rounded": jsonable_encoder(res_r.tolist()),"Probability": jsonable_encoder(res.tolist())})
 
+@app.get("/api")
+def home():
+    return jsonable_encoder({"message":"Welcome to Churn Prediction API"})
+    
