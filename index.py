@@ -31,7 +31,6 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
-    "https://telecom-churn.vercel.app"
 ]
 
 app.add_middleware(
@@ -67,20 +66,17 @@ def predict_csv(file: UploadFile = File(...)):
       
 @app.post("/api/getPrediction")
 def get_prediction(body: ChurnData):
+    cid:Union[str,int] = body.cid
+    data:list[Union[float,int]] = body.data
     print(body.data)
     df_train = np.array([body.data])
     df_train = preprocess(df_train)
     res = model.predict(df_train)
-    return jsonable_encoder({"cid":body.cid,"prediction":np.round(res).astype(int).ravel().tolist()[0],"probablity": jsonable_encoder(float(res.tolist()[0][0])*100),"data":body.data})
+    return jsonable_encoder({"cid":cid,"prediction":np.round(res).astype(int).ravel().tolist()[0],"probablity": jsonable_encoder(float(res.tolist()[0][0])*100),"data":data})
 
 
 
 @app.get("/api")
-def hello_server():
-    return jsonable_encoder({"msg":"Server is Running"})
-
-
-@app.get("/api/home")
 def read_root():
     df_train = pd.read_csv("dataset/pre_train.csv")
     df_train = preprocess(df_train)
