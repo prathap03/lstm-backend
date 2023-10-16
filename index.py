@@ -47,7 +47,7 @@ def preprocess(x: pd.DataFrame) -> np.ndarray:
         x_scaled = scaler.transform(x)
         x_train = np.reshape(x_scaled, (x_scaled.shape[0], 1, x_scaled.shape[1]))
         
-        return x_train
+        return x_train,x
     
 class ChurnData(BaseModel):
     cid: Union[str,int]
@@ -57,20 +57,30 @@ class ChurnData(BaseModel):
 @app.post("/api/predictCSV")
 def predict_csv(file: UploadFile = File(...)):
     try:
-        df = pd.read_csv(file.file).head()
-        return jsonable_encoder({"data":df.to_dict(),"graph":[FileResponse("pic.png")]}) 
-        # return jsonable_encoder({"data":df.to_dict()})
+        df = pd.read_csv(file.file)
+        df_train,orig = preprocess(df)
+        listP = []
+        res = model.predict(df_train)
+        res_rounded = np.round(res)
+        res_r = res_rounded.astype(int).ravel()
+        orig["pred"] = res_r
+        orig["prob"] = res
+        
     except Exception as e:
         print(e)
         return jsonable_encoder({"error":e})  
+    
+    result_list = orig.to_dict(orient='records')
+    return jsonable_encoder(result_list)
       
 @app.post("/api/getPrediction")
 def get_prediction(body: ChurnData):
     cid:Union[str,int] = body.cid
     data:list[Union[float,int]] = body.data
     print(body.data)
+    
     df_train = np.array([body.data])
-    df_train = preprocess(df_train)
+    df_train,orig = preprocess(df_train)
     res = model.predict(df_train)
     return jsonable_encoder({"cid":cid,"prediction":np.round(res).astype(int).ravel().tolist()[0],"probablity": jsonable_encoder(float(res.tolist()[0][0])*100),"data":data})
 
@@ -79,7 +89,7 @@ def get_prediction(body: ChurnData):
 @app.get("/api/test")
 def read_root():
     df_train = pd.read_csv("dataset/pre_train.csv")
-    df_train = preprocess(df_train)
+    df_train,orig = preprocess(df_train)
     res = model.predict(df_train)
     res_rounded = np.round(res)
     res_r = res_rounded.astype(int).ravel()
